@@ -1,2 +1,6 @@
 /BTPData
+/MedicalImages
 .~lock.*
+*.jpg
+*.jpeg
+*.png
