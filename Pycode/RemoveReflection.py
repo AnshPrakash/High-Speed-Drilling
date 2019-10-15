@@ -52,7 +52,7 @@ def reconstruct(laplacian_pyr):
     laplacian_lst.append(laplacian_top)
   return laplacian_lst
 
-def Lapblend(img1,img2,mask,num_levels = 6):
+def Lapblend(img1,img2,mask,num_levels = 7):
   gaussian_pyr_1 = gaussian_pyramid(img1, num_levels)
   laplacian_pyr_1 = laplacian_pyramid(gaussian_pyr_1)
   # For image-2, calculate Gaussian and Laplacian
@@ -65,16 +65,16 @@ def Lapblend(img1,img2,mask,num_levels = 6):
   add_laplace = blend(laplacian_pyr_1,laplacian_pyr_2,mask_pyr_final)
   # Reconstruct the images
   final  = reconstruct(add_laplace)
-  return(final[num_levels])
+  res = (final[num_levels] - np.min(final[num_levels]))/(np.max(final[num_levels]) - np.min(final[num_levels]))
+  return(res)
 
 
 def correctReflection(img,mask):
   # dst = LaplacianBlend(img,)
   img = img
-  # img = img.astype(np.uint8)
-  # mask = mask.astype(np.uint8)
   img2 = np.zeros_like(mask)
   img2[mask == 1.0] = np.sum(img[mask!=1.0])/(img.size - np.sum(mask) + 0.01)
+  # img2[mask == 1.0] = np.sum(img)/(img.size)
   dst = Lapblend(img,img2,mask)
   # dst = cv2.inpaint(img,mask,9,cv2.INPAINT_TELEA)
   # dst = cv2.inpaint(img,mask,3,cv2.INPAINT_NS)
