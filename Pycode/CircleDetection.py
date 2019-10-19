@@ -1,16 +1,10 @@
-import numpy as np
-from matplotlib import pyplot as plt
-from skimage.transform import rotate
-import sys
-import cv2
 from helper import *
-
 
 img = cv2.imread(sys.argv[1],cv2.IMREAD_GRAYSCALE)
 mask = cv2.imread(sys.argv[2],cv2.IMREAD_GRAYSCALE)
 img = img/255.0
 kernel = np.ones((5,5), np.uint8) 
-mask = cv2.dilate(mask, kernel, iterations=2) 
+# mask = cv2.dilate(mask, kernel, iterations=1) 
 mask = mask/255.0
 
 blurred = anisotropicFilter(img,1,3,31)
@@ -41,29 +35,17 @@ EdgeMask = edges + mask
 
 
 ############ 
-res = res*255
-res = res.astype('uint8')
+# res = res*255
+# res = res.astype('uint8')
 
-# lines = cv2.HoughLines(res,1,np.pi/180,50)
-# for line in lines:
-#   for rho,theta in line:
-#     a = np.cos(theta)
-#     b = np.sin(theta)
-#     x0 = a*rho
-#     y0 = b*rho
-#     x1 = int(x0 + 1000*(-b))
-#     y1 = int(y0 + 1000*(a))
-#     x2 = int(x0 - 1000*(-b))
-#     y2 = int(y0 - 1000*(a))
-#     cv2.line(img,(x1,y1),(x2,y2),(0,0,0),1)
-
-
-minLineLength = 1
-maxLineGap = 1
-lines = cv2.HoughLinesP(res,1,np.pi/180,25,minLineLength,maxLineGap)
-for line in lines:
-  for x1,y1,x2,y2 in line:
-    cv2.line(img,(x1,y1),(x2,y2),(0,255,0),2)
+# circles = cv2.HoughCircles(res,cv2.HOUGH_GRADIENT,1,20,
+#                             param1=50,param2=30,minRadius=0,maxRadius=0)
+# circles = np.uint16(np.around(circles))
+# for i in circles[0,:]:
+#   # draw the outer circle
+#   cv2.circle(img,(i[0],i[1]),i[2],(0,255,0),2)
+#   # draw the center of the circle
+#   cv2.circle(img,(i[0],i[1]),2,(0,0,255),3)
 
 ##########
 # response = processGabor(img,filters)
@@ -71,11 +53,11 @@ for line in lines:
 
 
 cv2.imshow("Original",img)
-# cv2.imshow("Anisotropic Filtering",blurred)
-# cv2.imshow("Edges",edges)
-# cv2.imshow("Gabor Filter",response)
-# cv2.imshow("Mask",mask)
-# cv2.imshow("MaskEdge",EdgeMask)
+cv2.imshow("Anisotropic Filtering",blurred)
+cv2.imshow("Edges",edges)
+cv2.imshow("Gabor Filter",response)
+cv2.imshow("Mask",mask)
+cv2.imshow("MaskEdge",EdgeMask)
 cv2.imshow("ResEdge",res)
 
 
