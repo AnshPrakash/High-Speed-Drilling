@@ -1,65 +1,72 @@
 from helper import *
 
+
+def binarize(img):
+  mask = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,11,2)
+  return(mask)
+
+def BilateralBlur(img):
+  sigI,sigS = 5,5
+  kbsize = -1
+  blurred = cv2.bilateralFilter(img,kbsize,sigI,sigS)
+  # blurred = cv2.bilateralFilter(blurred,kbsize,sigI,sigS)
+  # blurred = cv2.bilateralFilter(blurred,kbsize,sigI,sigS)
+  return(blurred)
+
 img = cv2.imread(sys.argv[1],cv2.IMREAD_GRAYSCALE)
-mask = cv2.imread(sys.argv[2],cv2.IMREAD_GRAYSCALE)
-img = img/255.0
-kernel = np.ones((5,5), np.uint8) 
-# mask = cv2.dilate(mask, kernel, iterations=1) 
-mask = mask/255.0
+corners  = [[0,0],[0,img.shape[1]-1],[img.shape[0]-1,img.shape[1]-1] , [img.shape[0]-1,0]] 
+# corners  = [[25,43],[0,img.shape[1]-1],[img.shape[0]-1,img.shape[1]-1] , [img.shape[0]-1,0]] 
 
-blurred = anisotropicFilter(img,1,3,31)
-blurred = blurred*255
-blurred = blurred.astype('uint8')
-sigI,sigS = 9,9
-# ksize = 31
-kbsize = -1
+size = int(max(img.shape[0],img.shape[1])/3.1)
 
-blurred = cv2.bilateralFilter(blurred,kbsize,sigI,sigS)
-blurred = cv2.bilateralFilter(blurred,kbsize,sigI,sigS)
-blurred = cv2.bilateralFilter(blurred,kbsize,sigI,sigS)
-blurred = blurred/255.0
-kernel = np.ones((9,9))
-# gradient = cv2.morphologyEx(img, cv2.MORPH_GRADIENT, kernel)
-# gradient = gradient*255
-# gradient = gradient.astype('uint8')
-# edges = cv2.Canny(gradient,30,100)
+croppedImgs = [0]*4
+croppedImgs[0] = img[corners[0][0]:corners[0][0] + size, corners[0][1]:corners[0][1]+size] #Top Left
+croppedImgs[1] = img[corners[1][0]:corners[1][0] + size, corners[1][1] - size:corners[1][1]] #Top Right
+croppedImgs[2] = img[corners[2][0] - size:corners[2][0], corners[2][1] - size:corners[2][1]] # Bottom right
+croppedImgs[3] = img[corners[3][0] - size:corners[3][0], corners[3][1]:corners[3][1] + size] # Bottom Left
 
-filters = build_filters()
-response = processGabor(blurred,filters)
-response = response*255
-response = response.astype('uint8')
-edges = cv2.Canny(response,30,100)
-edges = edges/255.0
-res = edges*(1-mask)
-EdgeMask = edges + mask
+lowFimgs = []
+for limg in croppedImgs:
+  lowFimgs.append(BilateralBlur(limg))
 
+binImgs = []
+for bimg in lowFimgs:
+  binImgs.append(binarize(bimg))
 
-############ 
-# res = res*255
-# res = res.astype('uint8')
+kernel = np.ones((3,3),np.uint8)
+for i in range(len(binImgs)):
+  binImgs[i] = cv2.morphologyEx(binImgs[i], cv2.MORPH_OPEN, kernel,iterations = 1)
 
-# circles = cv2.HoughCircles(res,cv2.HOUGH_GRADIENT,1,20,
-#                             param1=50,param2=30,minRadius=0,maxRadius=0)
-# circles = np.uint16(np.around(circles))
-# for i in circles[0,:]:
-#   # draw the outer circle
-#   cv2.circle(img,(i[0],i[1]),i[2],(0,255,0),2)
-#   # draw the center of the circle
-#   cv2.circle(img,(i[0],i[1]),2,(0,0,255),3)
+minRadius = int((size/3)/2)
+maxRadius = int((size*(1.414)))
+minDist = size
+resolution = 1
+CannyHigh = 80
+AccumThresh = 50
+for j,res in enumerate(binImgs):
+  circles = cv2.HoughCircles(res,cv2.HOUGH_GRADIENT,resolution,minDist,
+                              param1=CannyHigh,param2=AccumThresh,minRadius=minRadius,maxRadius=maxRadius)
+  if circles is None:
+    continue
+  circles = np.uint16(np.around(circles))
+  # print(circles[0][0])
+  lowFimgs[j] = cv2.cvtColor(lowFimgs[j],cv2.COLOR_GRAY2BGR)
+  for i in circles[0,:]:
+    # draw the outer circle
+    cv2.circle(lowFimgs[j],(i[0],i[1]),i[2],(0,255,0),2)
+    # draw the center of the circle
+    cv2.circle(lowFimgs[j],(i[0],i[1]),2,(0,0,255),3)
 
-##########
-# response = processGabor(img,filters)
-# print(Gauss2d(5,1,3,20.0))
 
 
 cv2.imshow("Original",img)
-cv2.imshow("Anisotropic Filtering",blurred)
-cv2.imshow("Edges",edges)
-cv2.imshow("Gabor Filter",response)
-cv2.imshow("Mask",mask)
-cv2.imshow("MaskEdge",EdgeMask)
-cv2.imshow("ResEdge",res)
 
+for i,img in enumerate(binImgs):
+  cv2.imshow("Adaptive Theresholding"+str(i),img)
+
+
+for i,img in enumerate(lowFimgs):
+  cv2.imshow("Blurred"+str(i),img)
 
 
 
