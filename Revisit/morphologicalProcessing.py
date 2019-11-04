@@ -6,11 +6,62 @@ from skimage.morphology import erosion, dilation, opening, closing, white_tophat
 from skimage.morphology import disk
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
+from sympy import Point,Line
 
 
 def binarize(img):
   mask = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,51,5)
   return(mask)
+
+
+def getPoints(rho,theta):
+  a = np.cos(theta)
+  b = np.sin(theta)
+  x0 = a*rho
+  y0 = b*rho
+  x1 = int(x0 + 1000*(-b))
+  y1 = int(y0 + 1000*(a))
+  x2 = int(x0 - 1000*(-b))
+  y2 = int(y0 - 1000*(a))
+  return(Point(x1,y1),Point(x2,y2))
+
+
+def getAllAngles(lines):
+  '''
+    returns a list of angles bw all the lines nC2
+  '''
+  angles = []
+  for i in range(len(lines)):
+    for j in range(i+1,len(lines)):
+      p1,p2 = getPoints(lines[i][0],lines[i][1]) 
+      p11,p22 = getPoints(lines[j][0],lines[j][1]) 
+      l1 = Line(p1,p2)
+      l2 = Line(p11,p22)
+      ang = l1.angle_between(l2).evalf()
+      angles.append(min(ang,np.pi - ang))
+  return(np.array(angles))
+
+
+
+
+def getSquares(lines):
+  '''
+    eps is the acceptable variance for considering it to be a square
+  '''
+  squares = []
+  minn = 100000
+  for i in range(len(lines)):
+    for j in range(i+1,len(lines)):
+      for k in range(j+1,len(lines)):
+        for l in range(k+1,len(lines)):
+          psq = [lines[i],lines[j],lines[k],lines[l]]
+          angles = getAllAngles(psq)
+          print(abs(np.mean(angles) - np.pi/2))
+          if abs(np.mean(angles) - np.pi/2) < minn:
+            squares = psq
+            minn = abs(np.mean(angles) - np.pi/2)
+  print("minn",minn)
+  return(squares)
 
 
 def distance(x1,y1,x2,y2,x0,y0):
@@ -37,8 +88,6 @@ blurred = cv2.GaussianBlur(blurred,(3,3),cv2.BORDER_DEFAULT)
 edges = cv2.Canny(blurred,60,150)
 
 # distance_thres = 900
-c0 = edges.shape[0]/2
-c1 = edges.shape[1]/2
 lines = cv2.HoughLines(edges,1,np.pi/180,65)
 
 
@@ -47,14 +96,14 @@ X = lines.copy()
 X = X.reshape(lines.shape[0],lines.shape[2])
 scaler.fit(X)
 X = scaler.transform(X)
-clustering = DBSCAN(eps=0.1, min_samples=2).fit(X)
+clustering = DBSCAN(eps=0.3, min_samples=2).fit(X)
 # lines = lines.reshape(lines.shape[0],-1,lines.shape[1])
 
 labels = clustering.labels_
 labToColour = {}
-
 centriods = {}
 
+shwSquare = img.copy() # remove this later
 
 for i,line in enumerate(lines):
   rho = line[0][0]
@@ -78,11 +127,14 @@ for i,line in enumerate(lines):
     centriods[labels[i]] = centriods[labels[i]] + np.array([rho,theta,1])
   color = labToColour[labels[i]]
   # cv2.line(img,(x1,y1),(x2,y2),color,1)
-  
+
+
+centriodLines = []
 
 for i in centriods:
   rho = centriods[i][0]/centriods[i][2]
   theta = centriods[i][1]/centriods[i][2]
+  centriodLines.append([rho,theta])
   a = np.cos(theta)
   b = np.sin(theta)
   x0 = a*rho
@@ -96,6 +148,26 @@ for i in centriods:
 
 print(labToColour)
 
+squares = centriodLines
+if len(centriodLines)>4:
+  squares = getSquares(centriodLines)
+
+print(squares)
+
+for i,_ in enumerate(squares):
+  rho = squares[i][0]
+  theta = squares[i][1]
+  a = np.cos(theta)
+  b = np.sin(theta)
+  x0 = a*rho
+  y0 = b*rho
+  x1 = int(x0 + 1000*(-b))
+  y1 = int(y0 + 1000*(a))
+  x2 = int(x0 - 1000*(-b))
+  y2 = int(y0 - 1000*(a))
+  color = (int((np.random.rand(1)*255)[0]),int((np.random.rand(1)*255)[0]),int((np.random.rand(1)*255)[0]))
+  cv2.line(shwSquare,(x1,y1),(x2,y2),color,2)
+
 
 
 
@@ -104,6 +176,7 @@ print(labToColour)
 cv2.imshow("Original",blurred)
 cv2.imshow("Edges",edges)
 cv2.imshow('houghlines',img)
+cv2.imshow('Square',shwSquare)
 # cv2.imshow("binary",binary)
 
 cv2.waitKey(0)
