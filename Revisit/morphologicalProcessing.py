@@ -1,4 +1,3 @@
-import numpy as np
 from matplotlib import pyplot as plt
 import sys,os
 import cv2
@@ -7,6 +6,8 @@ from skimage.morphology import disk
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import StandardScaler
 from sympy import Point,Line
+import numpy as np
+import math
 
 
 def binarize(img):
@@ -39,7 +40,7 @@ def getAllAngles(lines):
       l2 = Line(p11,p22)
       ang = l1.angle_between(l2).evalf()
       angles.append(min(ang,np.pi - ang))
-  return(np.array(angles))
+  return(angles)
 
 
 
@@ -49,18 +50,24 @@ def getSquares(lines):
     eps is the acceptable variance for considering it to be a square
   '''
   squares = []
-  minn = 100000
+  minn = 10000000
   for i in range(len(lines)):
     for j in range(i+1,len(lines)):
       for k in range(j+1,len(lines)):
         for l in range(k+1,len(lines)):
           psq = [lines[i],lines[j],lines[k],lines[l]]
           angles = getAllAngles(psq)
+          angles.sort()
+          angles.reverse()
+          angles = angles[:4]
+          print(angles)
           print(abs(np.mean(angles) - np.pi/2))
           if abs(np.mean(angles) - np.pi/2) < minn:
             squares = psq
+            # CHECK THIS LINE
             minn = abs(np.mean(angles) - np.pi/2)
   print("minn",minn)
+  print("minn",math.degrees(minn))
   return(squares)
 
 
