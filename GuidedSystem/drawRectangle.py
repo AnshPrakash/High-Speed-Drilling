@@ -2,12 +2,11 @@ import cv2
 import numpy as np
 import sys
 
-drawing = False # true if mouse is pressed
+drawing = False 
 ix,iy = -1,-1
 curentNoRect = 0
 img,imgcopy = -1,-1
 rect = []
-
 
 def draw_rectangle(event,x,y,flags,param):
   global ix,iy,drawing,img,imgcopy,curentNoRect
