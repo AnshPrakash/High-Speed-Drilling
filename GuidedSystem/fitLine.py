@@ -2,9 +2,10 @@ import numpy as np
   
 # curve-fit() function imported from scipy 
 from scipy.optimize import curve_fit 
-  
 from matplotlib import pyplot as plt 
   
+
+
 # numpy.linspace with the given arguments 
 # produce an array of 40 numbers between 0 
 # and 10, both inclusive 
@@ -17,7 +18,6 @@ x = np.array(list(np.linspace(0, 10, num = 40))  + list(np.linspace(20, 30, num 
 # from normal (Gaussian) distribution to make 
 # them scatter across the base line 
 y =  21*x - 8.32 + np.random.normal(size = 80)*10
-
   
 # Test function with coefficients as parameters 
 def test(x, a, b): 

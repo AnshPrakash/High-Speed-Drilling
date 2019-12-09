@@ -7,10 +7,13 @@ import enclosedArea as ea
 import noiseReduction as nr
 
 
+'''
+  points are in closewise order everywhere
+'''
 
 def crop_region(reg,img):
-  # pts = np.array([[l[0],l[1]] for l in reg])
-  pts = np.array([[int(l.real),int(l.imag)] for l in reg])
+  pts = np.array([[l[0],l[1]] for l in reg])
+  # pts = np.array([[int(l.real),int(l.imag)] for l in reg])
   rect = cv2.boundingRect(pts)
   x,y,w,h = rect
   croped = img[y:y+h, x:x+w].copy()
@@ -27,11 +30,67 @@ def crop_region(reg,img):
   # cv2.imwrite("garbage/dst2.png", dst2)
   return(croped,mask)
 
-def getRegions(img,cords):
+
+def distance(A,B,C,x,y):
+  d = (A*x + B*y + C)/((A**2 + B**2)**0.5)
+  return(d)
+
+
+def sepAroundLine(line,xs,ys):
+  print(line)
+  x0,y0 = line[0]
+  x1,y1 = line[1]
+  A = -(y1 - y0)
+  B = (x1 - x0)
+  C = -y0*B -x0*A
+  xup,yup = [],[]
+  xdwn,ydwn = [],[]
+  for x,y in zip(xs,ys):
+    if (distance(A,B,C,x,y)< 0 ):
+      xdwn.append(x)
+      ydwn.append(y)
+    else:
+      xup.append(x)
+      yup.append(y)
+  return(xup,yup,xdwn,ydwn)
+      
+
+  
+
+image = []
+def getdata(edges,line,reg):
+  '''
+    line have two point representing that line
+  '''
+  global image
+  rect = cv2.boundingRect(np.array(reg))
+  origin = rect[0],rect[1]
+  cropped,mask = crop_region(reg,edges)
+  y,x = np.where(cropped*(mask//255) == 255 )
+  x = x + origin[0]
+  y = y + origin[1] 
+  xup,yup,xdwn,ydwn = sepAroundLine(line,x,y)
+  for i,j in zip(xup,yup):
+    cv2.circle(image,(i,j),1,(255,0,0),-1)
+  for i,j in zip(xdwn,ydwn):
+    cv2.circle(image,(i,j),1,(0,0,255),-1)
+  cv2.imshow("edge",image)
+  cv2.imshow("mask",cropped*(mask//255))
+  cv2.waitKey(0)
+  cv2.destroyAllWindows()
+  return(xup,yup,xdwn,ydwn)
+
+
+
+
+  
+
+def getRegions(image,cords):
   '''
     returns the region of interest for finding the groove lines 
     and the corresponding medial axial given by user
   '''
+  img = np.copy(image)
   newregs = []
   lines = []
   l = [0,1,2,3,0]
@@ -45,9 +104,6 @@ def getRegions(img,cords):
     length = np.absolute(v)
     v = v/length
     vt = complex(v.imag,-v.real)
-    # print("V",v)
-    # print("Vt",vt)
-    # print(v.real*vt.real+vt.imag*v.imag)
     d = length*0.2
     uplmt = 80
     u1 = u1 + v*d
@@ -56,15 +112,17 @@ def getRegions(img,cords):
     for j in range(3):
       cv2.line(img,(int(rect[j].real),int(rect[j].imag)),(int(rect[j+1].real),int(rect[j+1].imag)),(0,255,0),1)
     cv2.line(img,(int(rect[-1].real),int(rect[-1].imag)),(int(rect[0].real),int(rect[0].imag)),(0,255,0),1) 
-    lines.append([u1,u2])
     cv2.circle(img,(int(u1.real),int(u1.imag)),5,(0,0,255),-1)
     cv2.circle(img,(int(u2.real),int(u2.imag)),5,(0,0,255),-1)
+    rect = [[int(rec.real),int(rec.imag)] for rec in rect]
+    lines.append([[int(u1.real),int(u1.imag)],[int(u2.real),int(u2.imag)]])
     newregs.append(rect)
   cv2.imshow("yo",img)
   cv2.waitKey(0)
   cv2.destroyAllWindows()
+  # print("LINES",lines[1])
+  # print("******")
   return((newregs,lines))
-
 
 
 
@@ -78,22 +136,27 @@ image = cv2.imread(sys.argv[1],cv2.IMREAD_UNCHANGED)
 #            [(527, 336), (499, 678), (657, 700), (686, 354)], 
 #            [(631, 659), (578, 784), (994, 852), (966, 700)], 
 #            [(973, 403), (903, 732), (1058, 782), (1101, 416)]]
+
 regions = [[(615, 280), (554, 713), (997, 785), (1058, 369)]]
 print(regions)
 
-newregs,axis = getRegions(image,regions[0])
-exp,mask = crop_region(newregs[0],image)
+newregs,medians = getRegions(image,regions[0])
+edges = cv2.Canny(image,50,75)
+# print("median",medians[3])
+getdata(edges,medians[0],newregs[0])
+# exp,mask = crop_region(newregs[0],image)
+
 
 # exp,mask = crop_region(regions[0],image)
-exp = nr.rmSpecales(cv2.cvtColor(exp, cv2.COLOR_BGR2GRAY))
-edges = cv2.Canny(exp,25,50)
+# exp = nr.rmSpecales(cv2.cvtColor(exp, cv2.COLOR_BGR2GRAY))
+# edges = cv2.Canny(exp,25,50)
 
 
-cv2.imshow("image",image)
-cv2.imshow("enclosed region",edges*(mask//255))
-cv2.imshow("encl",exp)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# cv2.imshow("image",image)
+# cv2.imshow("enclosed region",edges*(mask//255))
+# cv2.imshow("encl",exp)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
 
 
 
