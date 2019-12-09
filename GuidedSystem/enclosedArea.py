@@ -31,9 +31,10 @@ def enclosefig(event,x,y,flags,param):
 
 
 
-def getenclosedFigs(NoOfFigs):
+def getenclosedFigs(image,NoOfFigs):
   global closure,img,imgcopy,selectedPoints
-  img = np.zeros((512,512,3), np.uint8)
+  # img = np.zeros((512,512,3), np.uint8)
+  img = np.copy(image)
   imgcopy = np.copy(img)
   enclosures = []
   for i in range(NoOfFigs):
@@ -57,4 +58,4 @@ def getenclosedFigs(NoOfFigs):
 
 
 
-print(getenclosedFigs(4))
+# print(getenclosedFigs(image,4))

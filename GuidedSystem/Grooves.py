@@ -3,5 +3,98 @@ import cv2
 import tangents as tg
 import numpy as np
 from sympy import Point, Circle, Line, Ray
-import drawRectangle as dr
+import enclosedArea as ea
+import noiseReduction as nr
+
+
+
+def crop_region(reg,img):
+  # pts = np.array([[l[0],l[1]] for l in reg])
+  pts = np.array([[int(l.real),int(l.imag)] for l in reg])
+  rect = cv2.boundingRect(pts)
+  x,y,w,h = rect
+  croped = img[y:y+h, x:x+w].copy()
+  pts = pts - pts.min(axis=0)
+  mask = np.zeros(croped.shape[:2], np.uint8)
+  cv2.drawContours(mask, [pts], -1, (255, 255, 255), -1, cv2.LINE_AA)
+  dst = cv2.bitwise_and(croped, croped, mask=mask)
+  bg = np.ones_like(croped, np.uint8)*255
+  cv2.bitwise_not(bg,bg, mask=mask)
+  dst2 = bg + dst
+  # cv2.imwrite("garbage/croped.png", croped)
+  # cv2.imwrite("garbage/mask.png", mask)
+  # cv2.imwrite("garbage/dst.png", dst)
+  # cv2.imwrite("garbage/dst2.png", dst2)
+  return(croped,mask)
+
+def getRegions(img,cords):
+  '''
+    returns the region of interest for finding the groove lines 
+    and the corresponding medial axial given by user
+  '''
+  newregs = []
+  lines = []
+  l = [0,1,2,3,0]
+  for i in range(len(l)-1):
+    reg = [cords[l[i]],cords[l[i+1]]]
+    u1 = complex(reg[0][0], reg[0][1])
+    u2 = complex(reg[1][0], reg[1][1])
+    cv2.circle(img,(int(u1.real),int(u1.imag)),4,(255,5,0),-1)
+    cv2.circle(img,(int(u2.real),int(u2.imag)),4,(255,5,0),-1)
+    v = (u2 - u1)
+    length = np.absolute(v)
+    v = v/length
+    vt = complex(v.imag,-v.real)
+    # print("V",v)
+    # print("Vt",vt)
+    # print(v.real*vt.real+vt.imag*v.imag)
+    d = length*0.2
+    uplmt = 80
+    u1 = u1 + v*d
+    u2 = u2 - v*d
+    rect = [u1 -vt*uplmt,u1  + vt*uplmt, u2 +vt*uplmt, u2 - vt*uplmt ]
+    for j in range(3):
+      cv2.line(img,(int(rect[j].real),int(rect[j].imag)),(int(rect[j+1].real),int(rect[j+1].imag)),(0,255,0),1)
+    cv2.line(img,(int(rect[-1].real),int(rect[-1].imag)),(int(rect[0].real),int(rect[0].imag)),(0,255,0),1) 
+    lines.append([u1,u2])
+    cv2.circle(img,(int(u1.real),int(u1.imag)),5,(0,0,255),-1)
+    cv2.circle(img,(int(u2.real),int(u2.imag)),5,(0,0,255),-1)
+    newregs.append(rect)
+  cv2.imshow("yo",img)
+  cv2.waitKey(0)
+  cv2.destroyAllWindows()
+  return((newregs,lines))
+
+
+
+
+
+
+image = cv2.imread(sys.argv[1],cv2.IMREAD_UNCHANGED)
+
+
+# regions = (ea.getenclosedFigs(image,1))
+# regions = [[(687, 239), (679, 389), (981, 430), (992, 265)],
+#            [(527, 336), (499, 678), (657, 700), (686, 354)], 
+#            [(631, 659), (578, 784), (994, 852), (966, 700)], 
+#            [(973, 403), (903, 732), (1058, 782), (1101, 416)]]
+regions = [[(615, 280), (554, 713), (997, 785), (1058, 369)]]
+print(regions)
+
+newregs,axis = getRegions(image,regions[0])
+exp,mask = crop_region(newregs[0],image)
+
+# exp,mask = crop_region(regions[0],image)
+exp = nr.rmSpecales(cv2.cvtColor(exp, cv2.COLOR_BGR2GRAY))
+edges = cv2.Canny(exp,25,50)
+
+
+cv2.imshow("image",image)
+cv2.imshow("enclosed region",edges*(mask//255))
+cv2.imshow("encl",exp)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+
+
 

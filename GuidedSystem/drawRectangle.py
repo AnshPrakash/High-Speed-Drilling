@@ -40,4 +40,4 @@ def get_rectangles(im):
       break
   cv2.destroyAllWindows()
 
-get_rectangles(sys.argv[1])
+# get_rectangles(sys.argv[1])
