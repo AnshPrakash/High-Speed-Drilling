@@ -37,7 +37,7 @@ def distance(A,B,C,x,y):
 
 
 def sepAroundLine(line,xs,ys):
-  print(line)
+  # print(line)
   x0,y0 = line[0]
   x1,y1 = line[1]
   A = -(y1 - y0)
@@ -124,16 +124,35 @@ def getRegions(image,cords):
 
 
 
-def fitline(A,B,C,xs,ys):
-  pass
+def fitline(img,line,xs,ys,color):
+  x0,y0 = line[0]
+  x1,y1 = line[1]
+  A = -(y1 - y0)
+  B = (x1 - x0)
+  C = -y0*B -x0*A
+  u0 = complex(line[0][0],line[0][1])
+  u1 = complex(line[1][0],line[1][1])
+  fun = lambda x, y : (distance(A,B,C,x,y))
+  dists = fun(np.array(xs),np.array(ys))
+  estimate = np.median(dists) # replace it with anything
+  v = u1 - u0
+  length = np.absolute(v)
+  v = v/length
+  vt = complex(v.imag,-v.real)
+  u0 = u0 - vt*estimate
+  u1 = u1 - vt*estimate
+  # color = (0,255,0)
+  res = [[int(u0.real),int(u0.imag)],[int(u1.real),int(u1.imag)]]
+  cv2.line(img,tuple(res[0]),tuple(res[1]),color,1)
+  return(res)
+
+
+
 
 image = cv2.imread(sys.argv[1],cv2.IMREAD_UNCHANGED)
 
 grayImg = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 smooth = nr.rmSpecales(grayImg)
-smooth = nr.smoothing(smooth)
-smooth = nr.smoothing(smooth)
-smooth = nr.smoothing(smooth)
 smooth = nr.smoothing(smooth)
 smooth = nr.smoothing(smooth)
 
@@ -149,21 +168,21 @@ print(regions)
 
 newregs,medians = getRegions(image,regions[0])
 edges = cv2.Canny(smooth,50,75)
-# print("median",medians[3])
-getdata(edges,medians[0],newregs[0])
-# exp,mask = crop_region(newregs[0],image)
-
+for AxisNum in range(4):
+  xup,yup,xdwn,ydwn = getdata(edges,medians[AxisNum],newregs[AxisNum])
+  fitline(image,medians[AxisNum],xup,yup,(255,0,0))
+  fitline(image,medians[AxisNum],xdwn,ydwn,(0,0,255))
 
 # exp,mask = crop_region(regions[0],image)
 # exp = nr.rmSpecales(cv2.cvtColor(exp, cv2.COLOR_BGR2GRAY))
 # edges = cv2.Canny(exp,25,50)
 
 
-# cv2.imshow("image",image)
+cv2.imshow("image",image)
 # cv2.imshow("enclosed region",edges*(mask//255))
 # cv2.imshow("encl",exp)
 
-cv2.imshow("smooth",smooth)
+# cv2.imshow("smooth",smooth)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
