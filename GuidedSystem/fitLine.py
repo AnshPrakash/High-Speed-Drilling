@@ -3,7 +3,7 @@ import numpy as np
 # curve-fit() function imported from scipy 
 from scipy.optimize import curve_fit 
 from matplotlib import pyplot as plt 
-  
+
 
 
 # numpy.linspace with the given arguments 

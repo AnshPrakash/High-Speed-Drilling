@@ -56,13 +56,11 @@ def sepAroundLine(line,xs,ys):
       
 
   
-
-image = []
 def getdata(edges,line,reg):
   '''
     line have two point representing that line
   '''
-  global image
+  temp = cv2.merge([edges,edges,edges])
   rect = cv2.boundingRect(np.array(reg))
   origin = rect[0],rect[1]
   cropped,mask = crop_region(reg,edges)
@@ -71,11 +69,11 @@ def getdata(edges,line,reg):
   y = y + origin[1] 
   xup,yup,xdwn,ydwn = sepAroundLine(line,x,y)
   for i,j in zip(xup,yup):
-    cv2.circle(image,(i,j),1,(255,0,0),-1)
+    cv2.circle(temp,(i,j),1,(255,0,0),-1)
   for i,j in zip(xdwn,ydwn):
-    cv2.circle(image,(i,j),1,(0,0,255),-1)
-  cv2.imshow("edge",image)
-  cv2.imshow("mask",cropped*(mask//255))
+    cv2.circle(temp,(i,j),1,(0,0,255),-1)
+  cv2.imshow("edge",temp)
+  # cv2.imshow("mask",cropped*(mask//255))
   cv2.waitKey(0)
   cv2.destroyAllWindows()
   return(xup,yup,xdwn,ydwn)
@@ -126,9 +124,18 @@ def getRegions(image,cords):
 
 
 
-
+def fitline(A,B,C,xs,ys):
+  pass
 
 image = cv2.imread(sys.argv[1],cv2.IMREAD_UNCHANGED)
+
+grayImg = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+smooth = nr.rmSpecales(grayImg)
+smooth = nr.smoothing(smooth)
+smooth = nr.smoothing(smooth)
+smooth = nr.smoothing(smooth)
+smooth = nr.smoothing(smooth)
+smooth = nr.smoothing(smooth)
 
 
 # regions = (ea.getenclosedFigs(image,1))
@@ -141,7 +148,7 @@ regions = [[(615, 280), (554, 713), (997, 785), (1058, 369)]]
 print(regions)
 
 newregs,medians = getRegions(image,regions[0])
-edges = cv2.Canny(image,50,75)
+edges = cv2.Canny(smooth,50,75)
 # print("median",medians[3])
 getdata(edges,medians[0],newregs[0])
 # exp,mask = crop_region(newregs[0],image)
@@ -155,8 +162,10 @@ getdata(edges,medians[0],newregs[0])
 # cv2.imshow("image",image)
 # cv2.imshow("enclosed region",edges*(mask//255))
 # cv2.imshow("encl",exp)
-# cv2.waitKey(0)
-# cv2.destroyAllWindows()
+
+cv2.imshow("smooth",smooth)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
 
 

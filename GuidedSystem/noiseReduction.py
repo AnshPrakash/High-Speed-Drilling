@@ -16,4 +16,8 @@ def smoothing(img):
   '''
     img should be greyscale
   '''
-  pass
+  sigI,sigS = 9,9
+  # ksize = 31
+  kbsize = -1
+  smooth = cv2.bilateralFilter(img,kbsize,sigI,sigS)
+  return(smooth)
