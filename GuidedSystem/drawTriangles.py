@@ -12,7 +12,7 @@ selectedPoints = 0
 def enclosetriangle(event,x,y,flags,param):
   global ix,iy,drawing,img,imgcopy,closure,selectedPoints
   if event == cv2.EVENT_LBUTTONDOWN:
-    print("x,y",x,y)
+    # print("x,y",x,y)
     drawing = True
     ix,iy = x,y
     selectedPoints += 1
@@ -23,7 +23,7 @@ def enclosetriangle(event,x,y,flags,param):
     img = np.copy(imgcopy)
     if selectedPoints == 5:
       drawing = False
-      print("before",closure[1:])
+      # print("before",closure[1:])
       closure[1:] = pro.clockify(closure[1:])
       for i in range(1,4):
         cv2.line(img,closure[i],closure[i+1],(0,255,0),3)

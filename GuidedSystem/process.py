@@ -73,8 +73,24 @@ def getdata(edges,line,reg):
   cv2.destroyAllWindows()
   return(xup,yup,xdwn,ydwn)
 
-
-
+def getUniData(edges,line,reg):
+  '''
+    line have two point representing that line
+  '''
+  temp = cv2.merge([edges,edges,edges])
+  rect = cv2.boundingRect(np.array(reg))
+  origin = rect[0],rect[1]
+  cropped,mask = crop_region(reg,edges)
+  y,x = np.where(cropped*(mask//255) == 255 )
+  x = x + origin[0]
+  y = y + origin[1]
+  for i,j in zip(x,y):
+    cv2.circle(temp,(i,j),1,(0,0,255),-1)
+  cv2.imshow("edge",temp)
+  # cv2.imshow("mask",cropped*(mask//255))
+  cv2.waitKey(0)
+  cv2.destroyAllWindows()
+  return(x,y)
 
   
 
@@ -98,7 +114,7 @@ def getRegions(image,cords):
     v = v/length
     vt = complex(v.imag,-v.real)
     d = length*0.2
-    uplmt = 80
+    # uplmt = 80
     uplmt = 50
     u1 = u1 + v*d
     u2 = u2 - v*d
@@ -158,9 +174,8 @@ def getRegionsTri(image,cords):
   img = np.copy(image)
   newregs = []
   lines = []
-  l = [0,1,0,2,0,3,0,4,1,2,2,3,3,4,4,1] 
+  l = [0,1,0,2,0,3,0,4,4,1,1,2,2,3,3,4] 
   for i in range(0,len(l),2):
-    print(i)
     reg = [cords[l[i]],cords[l[i+1]]]
     u1 = complex(reg[0][0], reg[0][1])
     u2 = complex(reg[1][0], reg[1][1])
@@ -171,7 +186,7 @@ def getRegionsTri(image,cords):
     v = v/length
     vt = complex(v.imag,-v.real)
     d = length*0.2
-    uplmt = 80
+    # uplmt = 80
     uplmt = 50
     u1 = u1 + v*d
     u2 = u2 - v*d
