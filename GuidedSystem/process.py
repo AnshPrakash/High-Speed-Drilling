@@ -102,7 +102,8 @@ def getRegions(image,cords):
   img = np.copy(image)
   newregs = []
   lines = []
-  l = [0,1,2,3,0]
+  # l = [0,1,2,3,0]
+  l = [3,0,1,2,3]
   for i in range(len(l)-1):
     reg = [cords[l[i]],cords[l[i+1]]]
     u1 = complex(reg[0][0], reg[0][1])
@@ -115,7 +116,7 @@ def getRegions(image,cords):
     vt = complex(v.imag,-v.real)
     d = length*0.2
     # uplmt = 80
-    uplmt = 50
+    uplmt = 70
     u1 = u1 + v*d
     u2 = u2 - v*d
     rect = [u1 -vt*uplmt,u1  + vt*uplmt, u2 +vt*uplmt, u2 - vt*uplmt ]
@@ -155,7 +156,7 @@ def fitline(img,line,xs,ys,color):
   u1 = u1 - vt*estimate
   # color = (0,255,0)
   res = [[int(u0.real),int(u0.imag)],[int(u1.real),int(u1.imag)]]
-  cv2.line(img,tuple(res[0]),tuple(res[1]),color,1)
+  cv2.line(img,tuple(res[0]),tuple(res[1]),color,4)
   return(res)
 
 
@@ -187,7 +188,7 @@ def getRegionsTri(image,cords):
     vt = complex(v.imag,-v.real)
     d = length*0.2
     # uplmt = 80
-    uplmt = 50
+    uplmt = 70
     u1 = u1 + v*d
     u2 = u2 - v*d
     rect = [u1 -vt*uplmt,u1  + vt*uplmt, u2 +vt*uplmt, u2 - vt*uplmt ]
@@ -206,3 +207,23 @@ def getRegionsTri(image,cords):
   # print("******")
   return((newregs,lines))
 
+
+def mapPoint(M,pts):
+  r = M.dot(np.float32([pts[0],pts[1],1]))
+  r = r/r[2]
+  return(np.int32(r[:-1]))
+
+def getbaseFromGrooveLines(GrooveLines,M):
+  '''
+    Given Groove Lines from Grooves.GetGrooveInfo
+    it will return the base for the triangle in the next step
+    M : it is transform matrix extracted from getPerspective given the 
+    corresponding templates between images
+  '''
+  Gl = GrooveLines.copy()
+  bases = []
+  for groove in Gl:
+    line = groove[0]
+    line = [mapPoint(M,pt) for pt in line]
+    bases.append(line)
+  return(np.array(bases))

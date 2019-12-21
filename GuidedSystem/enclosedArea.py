@@ -9,6 +9,8 @@ img,imgcopy = -1,-1
 closure = []
 lineMade = False
 selectedPoints = 0
+color = (0,255,0)
+thickness = 4
 
 def enclosefig(event,x,y,flags,param):
   global ix,iy,drawing,img,imgcopy,closure,selectedPoints
@@ -18,24 +20,25 @@ def enclosefig(event,x,y,flags,param):
     selectedPoints += 1
     closure.append((ix,iy))
     if selectedPoints > 1:
-      cv2.line(img,closure[-2],closure[-1],(0,255,0),1)
+      cv2.line(img,closure[-2],closure[-1],color,thickness)
     imgcopy = img
     img = np.copy(imgcopy)
     if selectedPoints == 4:
       drawing = False
-      cv2.line(img,closure[0],closure[-1],(0,255,0),1)
+      cv2.line(img,closure[0],closure[-1],color,thickness)
       closure = pro.clockify(closure) # ordering in clockwise direction
   elif event == cv2.EVENT_MOUSEMOVE:
     if drawing == True:
       img = np.copy(imgcopy)
-      cv2.line(img,closure[-1],(x,y),(0,255,0),1)
+      cv2.line(img,closure[-1],(x,y),color,thickness)
   
 
 
 
-def getenclosedFigs(image,NoOfFigs):
-  global closure,img,imgcopy,selectedPoints
+def getenclosedFigs(image,NoOfFigs,colr = (0,255,0)):
+  global closure,img,imgcopy,selectedPoints,color
   # img = np.zeros((512,512,3), np.uint8)
+  color = colr
   img = np.copy(image)
   imgcopy = np.copy(img)
   enclosures = []

@@ -10,7 +10,7 @@ import process as pro
 
 def GetGrooveInfo(image):
   '''
-    It will query user for corners of the grooves and then it is return
+    It will query user for corners of the grooves and then it will return
     those 4 corners called as region and lines fiiting on the edges of groove
   '''
   # image = cv2.imread(sys.argv[1],cv2.IMREAD_UNCHANGED)

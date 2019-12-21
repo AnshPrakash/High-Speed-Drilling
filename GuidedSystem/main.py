@@ -4,6 +4,8 @@ import numpy as np
 import Grooves
 import Triangles
 import drawCircles as dr
+import enclosedArea as ea
+import process as pro
 
 def PolygonArea(corners):
   n = len(corners) # of corners
@@ -50,6 +52,10 @@ def scoreGrooves(GrooveLines,corners):
 def scoreTri():
   pass
 
+
+
+
+
 '''
   image1 is just the template with circular holes
   image2 only include the rectangular grooves
@@ -58,24 +64,28 @@ def scoreTri():
 
 images =  [cv2.imread(sys.argv[i+1],cv2.IMREAD_UNCHANGED) for i in range(3)]
 
-# Score  Circles
-img = np.copy(images[0])
-circles = dr.getCircles(img)
-# circles = [[678, 386, 40], [1051, 448, 44], [966, 845, 40], [589, 775, 45]]
-# circles = [[678, 386, 80], [1051, 448, 44], [966, 845, 40], [589, 775, 45]]
-# print(circles)
-# print("Circle Score",scoreCircles(circles))
+# # Score  Circles
+# img = np.copy(images[0])
+# circles = dr.getCircles(img)
+# # print("Circle Score",scoreCircles(circles))
+
+# get Templates
+templates = [[],[]]
+templates[0] = (ea.getenclosedFigs(images[1],1,(0,0,0)))[0]
+templates[1] = (ea.getenclosedFigs(images[2],1,(0,0,0)))[0]
+M12 = cv2.getPerspectiveTransform(np.float32(templates[0]),np.float32(templates[1]))
 
 
 # Score Rectangular groves
 img = np.copy(images[1])
 GrooveLines,corners = Grooves.GetGrooveInfo(img)
-print("Groove Score",scoreGrooves(GrooveLines,corners))
+Tribases = pro.getbaseFromGrooveLines(GrooveLines,M12)
 # print(GrooveLines)
-# print("_______________")
-# print(corners)
+# print("Groove Score",scoreGrooves(GrooveLines,corners))
+
 
 # Score Diagonal grooves
 img = np.copy(images[2])
-TriLines = Triangles.GetTriangles(img)
+TriLines = Triangles.GetTriangles(img,Tribases)
+print(TriLines)
 
