@@ -30,6 +30,8 @@ def distance(A,B,C,x,y):
   d = (A*x + B*y + C)/((A**2 + B**2)**0.5)
   return(d)
 
+def distancebwLines(A,B,C1,C2):
+  return(abs(C2 - C1)/((A*A + B*B)**0.5))
 
 def sepAroundLine(line,xs,ys):
   # print(line)

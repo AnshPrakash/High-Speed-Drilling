@@ -46,8 +46,25 @@ def scoreCircles(circles):
 
 
 def scoreGrooves(GrooveLines,corners):
-  print(GrooveLines)
-  print(corners)
+  grooveEqForm = []
+  for lines in GrooveLines:
+    [x0,y0],[x1,y1] = lines[0]
+    A = -(y1 - y0)
+    B = (x1 - x0)
+    C1 = -y0*B -x0*A
+    [x0,y0],[x1,y1] = lines[1]
+    C2 = -y0*B -x0*A
+    grooveEqForm.append([A,B,C1,C2])
+  widths = [pro.distancebwLines(A,B,C1,C2) for A,B,C1,C2 in grooveEqForm]
+  widthScore = (1 - (max(widths)-min(widths))/(max(widths)))
+  (tplfx, tplfy), (width, height), angle = rect = cv2.minAreaRect(np.array(corners))
+  angles = list(range(0,180,1))
+  fit_area = min([PolygonArea(np.array([rotate(corners[i],angle) for i in range(len(corners))]))  for angle in angles])
+  areaScore = ((fit_area/(width*height)))
+  return((areaScore + widthScore)/2 )
+
+
+  
 
 def scoreTri():
   pass
@@ -81,11 +98,12 @@ img = np.copy(images[1])
 GrooveLines,corners = Grooves.GetGrooveInfo(img)
 Tribases = pro.getbaseFromGrooveLines(GrooveLines,M12)
 # print(GrooveLines)
-# print("Groove Score",scoreGrooves(GrooveLines,corners))
+print("Groove Score",scoreGrooves(GrooveLines,corners))
 
 
 # Score Diagonal grooves
 img = np.copy(images[2])
 TriLines = Triangles.GetTriangles(img,Tribases)
+
 print(TriLines)
 
