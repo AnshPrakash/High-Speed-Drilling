@@ -90,7 +90,7 @@ def scoreTri(TriLines,img):
     TriLengths.append(lengths)
   TriAreaScore = 1 - ((np.max(TriArea) - np.min(TriArea))/np.max(TriArea))
   TriLengths = np.array(TriLengths)
-  TriLengthScores = 1 - ((np.max(TriLengths,axis=0) - np.min(TriLengths,axis=0))/np.max(TriLengths,axis=0))
+  TriLengthScores = 1 - ((np.max(TriLengths,axis=0) - np.min(TriLengths,axis=0))/np.max(TriLengths,axis=0)) #for congrugency 
   FinalScore = (TriAreaScore + np.mean(TriLengthScores))/2.0
   cv2.imshow("intersectionPoints",img)
   cv2.waitKey(0)
