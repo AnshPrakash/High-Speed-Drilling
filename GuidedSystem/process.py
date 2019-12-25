@@ -33,6 +33,33 @@ def distance(A,B,C,x,y):
 def distancebwLines(A,B,C1,C2):
   return(abs(C2 - C1)/((A*A + B*B)**0.5))
 
+def distancebwPoints(p1,p2):
+  return(((p2[1]- p1[1])**2 + (p2[0]- p1[0])**2)**0.5)
+
+
+def getEquation(line):
+  '''
+    line is a list of two points
+    function will return the equation of line in Ax +By +C form as tuple
+  '''
+  [x0,y0],[x1,y1] = line
+  A = -(y1 - y0)
+  B = (x1 - x0)
+  C = -y0*B -x0*A
+  return(A,B,C)
+
+def intersection(L1, L2):
+  D  = L1[0] * L2[1] - L1[1] * L2[0]
+  Dx = L1[2] * L2[1] - L1[1] * L2[2]
+  Dy = L1[0] * L2[2] - L1[2] * L2[0]
+  if D != 0:
+    x = -Dx/D
+    y = -Dy/D
+    return([x,y])
+  else:
+    return(False)
+
+
 def sepAroundLine(line,xs,ys):
   # print(line)
   x0,y0 = line[0]
