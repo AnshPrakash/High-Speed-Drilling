@@ -5,7 +5,10 @@ import Grooves
 import Triangles
 import drawCircles as dr
 import enclosedArea as ea
+import noiseReduction as nr
 import process as pro
+import fitCountour as ftc
+import adjLine as adjL
 
 def PolygonArea(corners):
   n = len(corners) # of corners
@@ -98,7 +101,8 @@ def scoreTri(TriLines,img):
   return(FinalScore)
 
 
-
+def scoreEllipses(ellipses):
+  pass
 
 '''
   image1 is just the template with circular holes
@@ -107,10 +111,13 @@ def scoreTri(TriLines,img):
 '''
 
 images =  [cv2.imread(sys.argv[i+1],cv2.IMREAD_UNCHANGED) for i in range(3)]
-
 # # Score  Circles
 img = np.copy(images[0])
 circles = dr.getCircles(img)
+mask = ftc.createmask(circles,img.shape)
+img = cv2.cvtColor(images[0],cv2.COLOR_BGRA2BGR)
+ellipses,circles= ftc.getcontour(img,mask)
+
 print("Circle Score",scoreCircles(circles))
 
 # get Templates
@@ -125,15 +132,24 @@ M12 = cv2.getPerspectiveTransform(np.float32(templates[0]),np.float32(templates[
 
 # Score Rectangular groves
 img = np.copy(images[1])
-GrooveLines,corners = Grooves.GetGrooveInfo(img)
+grayImg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+smooth = nr.rmSpecales(grayImg)
+smooth = nr.smoothing(smooth)
+smooth = nr.smoothing(smooth)
+edges = cv2.Canny(smooth,50,75)
+GrooveLines,corners = Grooves.GetGrooveInfo(img,edges)
 Tribases = pro.getbaseFromGrooveLines(GrooveLines,M12)
 # GrooveLines = [[[[609, 627], [641, 375]], [[538, 618], [570, 366]]], [[[700, 339], [967, 387]], [[713, 265], [980, 313]]], [[[1020, 447], [988, 703]], [[1107, 457], [1075, 713]]], [[[926, 746], [659, 695]], [[913, 817], [646, 766]]]]
-
 print("Groove Score",scoreGrooves(GrooveLines,corners))
 
 # Score Diagonal grooves
 img = np.copy(images[2])
-TriLines = Triangles.GetTriangles(img,Tribases)
+grayImg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+smooth = nr.rmSpecales(grayImg)
+smooth = nr.rmSpecales(grayImg)
+smooth = nr.smoothing(smooth)
+edges = cv2.Canny(smooth,50,75)
+TriLines = Triangles.GetTriangles(img,Tribases,edges)
 
 # TriLines =        [
 #                     [[[597, 471], [456, 362]], [[605, 493], [481, 604]],np.array([[461, 602],[442, 342]], dtype=np.int32)], 
@@ -142,5 +158,5 @@ TriLines = Triangles.GetTriangles(img,Tribases)
 #                     [[[650, 544], [526, 655]], [[685, 541], [808, 660]], np.array([[785, 673],[522, 662]], dtype=np.int32)]
 #                   ]
 
-print(scoreTri(TriLines,img))
+print("Triangle Score",scoreTri(TriLines,img))
 
