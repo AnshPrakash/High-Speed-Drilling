@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-import sys
+import process as pro
 import drawCircles as dr
 
 def createmask(circles,shape):
@@ -27,7 +27,8 @@ def createmask(circles,shape):
   cv2.destroyAllWindows()
   return(finalmask)
 
-def getcontour(img,mask):
+def getcontour(image,mask):
+  img = np.copy(image)
   bgdModel = np.zeros((1,65),np.float64)
   fgdModel = np.zeros((1,65),np.float64)
   cv2.grabCut(img,mask,None,bgdModel,fgdModel,5,cv2.GC_INIT_WITH_MASK)
@@ -46,29 +47,35 @@ def getcontour(img,mask):
   cv2.drawContours(image, contours, -1, (0, 255, 0), 3)
   colors = [(255,0,0),(0,255,0),(0,0,255),(255,255,0)]
   ellipses = []
+  circles = []
   #fit ellipse 
   for cnt,color in zip(contours,colors):
     ellipse = cv2.fitEllipse(cnt)
+    (x,y),radius = cv2.minEnclosingCircle(cnt)
+    circles.append([int(x),int(y),int(radius)])
     ellipses.append(ellipse)
     cv2.ellipse(img,ellipse,color,2)
-  print("Ellipses",ellipses)
+    cv2.circle(img,(int(x),int(y)),int(radius),(253,155,125),2)
+  circles = pro.clockify(circles)
+  # print("circles",circles)
+  # print("Ellipses",ellipses)
   cv2.imshow("contour",image)
   # cv2.imshow("mask",mask*255)
-  cv2.imshow("ellipse",img)
+  cv2.imshow("ellipsesCircles",img)
   cv2.waitKey(0)
   cv2.destroyAllWindows()
-  return(ellipses)
+  return(ellipses,circles)
 
 
-image = cv2.imread(sys.argv[1],cv2.IMREAD_UNCHANGED)
-image = cv2.cvtColor(image,cv2.COLOR_BGRA2BGR)
-# image = cv2.resize(image,(1700,1000))
-img = np.copy(image)
-circles = dr.getCircles(image)
-# circles =  [[637, 220, 46], [1069, 292, 59], [1015, 702, 50], [605, 659, 51]]
-print(circles)
+# image = cv2.imread(sys.argv[1],cv2.IMREAD_UNCHANGED)
+# image = cv2.cvtColor(image,cv2.COLOR_BGRA2BGR)
+# # image = cv2.resize(image,(1700,1000))
+# img = np.copy(image)
+# circles = dr.getCircles(image)
+# # circles =  [[637, 220, 46], [1069, 292, 59], [1015, 702, 50], [605, 659, 51]]
+# print(circles)
 
-mask = createmask(circles,img.shape)
-getcontour(img,mask)
+# mask = createmask(circles,img.shape)
+# getcontour(img,mask)
 
 

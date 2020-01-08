@@ -8,7 +8,7 @@ import enclosedArea as ea
 import noiseReduction as nr
 import process as pro
 import fitCountour as ftc
-import adjLine as adjL
+import adjustLine as adjL
 
 def PolygonArea(corners):
   n = len(corners) # of corners
@@ -101,8 +101,37 @@ def scoreTri(TriLines,img):
   return(FinalScore)
 
 
+def scoreAlignment(corners1,corners2):
+  c1 = np.mean(corners1,axis=0)
+  c2 = np.mean(corners2,axis=0)
+  diagonal = (np.array(corners1[0]) - np.array(corners1[2]))
+  diagonal = (diagonal[0]**2 + diagonal[1]**2)**0.5
+  scoreAlignment = (((c1-c2)[0]**2 + (c1-c2)[1]**2 )**0.5)/diagonal
+  return(scoreAlignment)
+
 def scoreEllipses(ellipses):
-  pass
+  avgE = 0
+  for ellipse in ellipses:
+    a,b = max(ellipse[1]),min(ellipse[1])
+    e = (1 - (b/a)**2)**(0.5)
+    avgE = avgE + e
+  avgE =avgE/len(ellipses)
+  return(1 - avgE)
+
+def scoreAdjustedGroove(adjGrooves):
+  score = 0
+  for groove in GrooveLines: 
+    l1 = np.array(groove[0][1]) - np.array(groove[0][0])
+    l2 = np.array(groove[1][1]) - np.array(groove[1][0])
+    l1 = l1/((l1[0]**2 + l1[1]**2)**0.5)
+    l2 = l2/((l2[0]**2 + l2[1]**2)**0.5)
+    cos = np.dot(l1,l2)
+    score = score + cos
+  score = score/4
+  return(score)
+
+
+
 
 '''
   image1 is just the template with circular holes
@@ -111,22 +140,25 @@ def scoreEllipses(ellipses):
 '''
 
 images =  [cv2.imread(sys.argv[i+1],cv2.IMREAD_UNCHANGED) for i in range(3)]
-# # Score  Circles
+
+
+# Score  Circles
 img = np.copy(images[0])
 circles = dr.getCircles(img)
 mask = ftc.createmask(circles,img.shape)
 img = cv2.cvtColor(images[0],cv2.COLOR_BGRA2BGR)
 ellipses,circles= ftc.getcontour(img,mask)
-
 print("Circle Score",scoreCircles(circles))
+print("Ellipse Score",scoreEllipses(ellipses))
+
+
 
 # get Templates
 templates = [[],[]]
 templates[0] = (ea.getenclosedFigs(images[1],1,(0,0,0)))[0]
 templates[1] = (ea.getenclosedFigs(images[2],1,(0,0,0)))[0]
-# M12 =np..array([[ 9.46167897e-01  2.04643325e-01 -2.40881775e+02]
-#  [-1.60914313e-01  1.02188150e+00  6.20816392e+01]
-#  [-1.14119539e-05  1.82432757e-05  1.00000000e+00]])
+# templates = [[(543, 175), (1145, 266), (1059, 877), (450, 773)], [(297, 163), (903, 157), (947, 774), (358, 768)]]
+
 M12 = cv2.getPerspectiveTransform(np.float32(templates[0]),np.float32(templates[1]))
 
 
@@ -138,9 +170,33 @@ smooth = nr.smoothing(smooth)
 smooth = nr.smoothing(smooth)
 edges = cv2.Canny(smooth,50,75)
 GrooveLines,corners = Grooves.GetGrooveInfo(img,edges)
+# GrooveLines = [[[[604, 626], [642, 380]], [[533, 615], [571, 369]]], [[[703, 344], [976, 392]], [[716, 268], [989, 316]]], [[[1026, 452], [978, 710]], [[1111, 467], [1063, 725]]], [[[912, 752], [650, 692]], [[894, 831], [632, 771]]]]
+# corners = [(620, 293), (1074, 372), (994, 802), (557, 703)]
+
+AlignmentScore = scoreAlignment(corners,templates[0]) # whether the groove are drawn in template
 Tribases = pro.getbaseFromGrooveLines(GrooveLines,M12)
-# GrooveLines = [[[[609, 627], [641, 375]], [[538, 618], [570, 366]]], [[[700, 339], [967, 387]], [[713, 265], [980, 313]]], [[[1020, 447], [988, 703]], [[1107, 457], [1075, 713]]], [[[926, 746], [659, 695]], [[913, 817], [646, 766]]]]
+
+adjustedGrooveLines = []
+img = np.copy(images[1])
+for groove in GrooveLines: 
+  l1 = adjL.adjustLine(groove[0],edges,img)
+  l2 = adjL.adjustLine(groove[1],edges,img)
+  adjustedGrooveLines.append([l1,l2])
+
+# adjustedGrooveLines = [[[[488, 1373], [800, -601]], [[414, 1362], [726, -613]]], [[[-284, 167], [1684, 513]], [[-267, 67], [1695, 447]]], [[[830, 1441], [1210, -521]], [[926, 1458], [1306, -504]]], [[[912, 752], [650, 692]], [[894, 831], [632, 771]]]]
+
+for groove in adjustedGrooveLines:
+  l1 = groove[0]
+  l2 = groove[1]
+  cv2.line(img,(l1[0][0],l1[0][1]),(l1[1][0],l1[1][1]),(255,255,0),1) 
+  cv2.line(img,(l2[0][0],l2[0][1]),(l2[1][0],l2[1][1]),(255,255,0),1) 
+cv2.imshow("Adjusted Lines",img)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
+
+print(adjustedGrooveLines)
 print("Groove Score",scoreGrooves(GrooveLines,corners))
+print("Adjusted Groove Score",scoreAdjustedGroove(adjustedGrooveLines))
 
 # Score Diagonal grooves
 img = np.copy(images[2])

@@ -88,7 +88,7 @@ def getdata(edges,line,reg):
   rect = cv2.boundingRect(np.array(reg))
   origin = rect[0],rect[1]
   cropped,mask = crop_region(reg,edges)
-  y,x = np.where(cropped*(mask//255) == 255 )
+  y,x = np.where(cropped*(mask//255) == 255)
   x = x + origin[0]
   y = y + origin[1] 
   xup,yup,xdwn,ydwn = sepAroundLine(line,x,y)
@@ -220,7 +220,7 @@ def getRegionsTri(image,cords):
     uplmt = 70
     u1 = u1 + v*d
     u2 = u2 - v*d
-    rect = [u1 -vt*uplmt,u1  + vt*uplmt, u2 +vt*uplmt, u2 - vt*uplmt ]
+    rect = [u1 -vt*uplmt,u1  + vt*uplmt, u2 +vt*uplmt, u2 - vt*uplmt]
     for j in range(3):
       cv2.line(img,(int(rect[j].real),int(rect[j].imag)),(int(rect[j+1].real),int(rect[j+1].imag)),(0,255,0),1)
     cv2.line(img,(int(rect[-1].real),int(rect[-1].imag)),(int(rect[0].real),int(rect[0].imag)),(0,255,0),1) 

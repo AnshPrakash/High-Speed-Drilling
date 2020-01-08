@@ -50,7 +50,7 @@ def fitLine(houghlines,orgline,origin,edges):
   ref = [1,refNormline[1]/math.pi]
   bestlineIdx,deviation = getMinDist(normLines,ref)
   bestline = houghlines[bestlineIdx]
-  if deviation > math.radians(20):
+  if deviation > math.radians(12):
     retline = orgline
     deviation = 0 
   else:
@@ -67,9 +67,11 @@ def getbestLine(croppedEdges,region,line,img):
   reg = pro.clockify(region)
   edges = cv2.merge([croppedEdges,croppedEdges,croppedEdges])
   box = cv2.boundingRect(np.array(reg))
+  # print("box",box)
+  # print("__________")
   origin = box[0],box[1]
-  print((reg[0][0],reg[0][1]))
-  cv2.circle(img, (reg[0][0],reg[0][1]), 3, (255,0,0), 3)
+  # print(reg)
+  # cv2.circle(img, (reg[0][0],reg[0][1]), 3, (255,0,0), 3)
   if lines is None:
     return(line,0)
   # drawlines(edges,img,lines,origin)
@@ -78,7 +80,7 @@ def getbestLine(croppedEdges,region,line,img):
 
 def adjustLine(line,edges,image):
   img = np.copy(image)
-  uplmt = 30
+  uplmt = 10
   x0,y0 = line[0]
   x1,y1 = line[1]
   A = -(y1 - y0)
@@ -101,6 +103,7 @@ def adjustLine(line,edges,image):
   newLine,_ = getbestLine(cropped*(mask//255),region,line,img)
   cv2.line(img,(newLine[0][0],newLine[0][1]),(newLine[1][0],newLine[1][1]),(255,255,0),1) 
   cv2.imshow("adjust Line",img)
+  # cv2.imshow("Image",image)
   # cv2.imshow("rect",cropped*(mask//255))
   # cv2.imshow("mask",mask)
   cv2.waitKey(0)
@@ -108,13 +111,13 @@ def adjustLine(line,edges,image):
   return(newLine)
 
 
-import noiseReduction as nr
-img = cv2.imread(sys.argv[1],cv2.IMREAD_UNCHANGED)
-groovelines = [[[[601, 638], [640, 380]], [[530, 627], [569, 369]]], [[[700, 342], [972, 387]], [[712, 267], [984, 312]]], [[[1024, 445], [982, 706]], [[1110, 458], [1068, 719]]], [[[914, 751], [645, 703]], [[899, 835], [630, 787]]]]
-grayImg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-smooth = nr.rmSpecales(grayImg)
-smooth = nr.smoothing(smooth)
-smooth = nr.smoothing(smooth)
-edges = cv2.Canny(smooth,50,75)
-# print(groovelines[0])
-adjustLine(groovelines[3][0],edges,img)
+# import noiseReduction as nr
+# img = cv2.imread(sys.argv[1],cv2.IMREAD_UNCHANGED)
+# groovelines = [[[[601, 638], [640, 380]], [[530, 627], [569, 369]]], [[[700, 342], [972, 387]], [[712, 267], [984, 312]]], [[[1024, 445], [982, 706]], [[1110, 458], [1068, 719]]], [[[914, 751], [645, 703]], [[899, 835], [630, 787]]]]
+# grayImg = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+# smooth = nr.rmSpecales(grayImg)
+# smooth = nr.smoothing(smooth)
+# smooth = nr.smoothing(smooth)
+# edges = cv2.Canny(smooth,50,75)
+# # print(groovelines[0])
+# adjustLine(groovelines[3][0],edges,img)

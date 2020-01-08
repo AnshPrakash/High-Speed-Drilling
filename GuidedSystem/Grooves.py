@@ -4,20 +4,16 @@ import tangents as tg
 import numpy as np
 from sympy import Point, Circle, Line, Ray
 import enclosedArea as ea
-import noiseReduction as nr
 import process as pro
 
 
-def GetGrooveInfo(image):
+def GetGrooveInfo(image,edges):
   '''
     It will query user for corners of the grooves and then it will return
     those 4 corners called as region and lines fiiting on the edges of groove
   '''
   # image = cv2.imread(sys.argv[1],cv2.IMREAD_UNCHANGED)
-  grayImg = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-  smooth = nr.rmSpecales(grayImg)
-  smooth = nr.smoothing(smooth)
-  smooth = nr.smoothing(smooth)
+
   regions = (ea.getenclosedFigs(image,1))
   # regions = [[(687, 239), (679, 389), (981, 430), (992, 265)],
   #            [(527, 336), (499, 678), (657, 700), (686, 354)], 
@@ -27,7 +23,6 @@ def GetGrooveInfo(image):
   # regions = [[(615, 280), (554, 713), (997, 785), (1058, 369)]]
   # print(regions)
   newregs,medians = pro.getRegions(image,regions[0])
-  edges = cv2.Canny(smooth,50,75)
   GrooveLines = []
   for AxisNum in range(4):
     xup,yup,xdwn,ydwn = pro.getdata(edges,medians[AxisNum],newregs[AxisNum])

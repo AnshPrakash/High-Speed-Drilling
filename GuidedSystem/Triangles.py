@@ -6,21 +6,21 @@ import noiseReduction as nr
 import process as pro
 
 
-def GetTriangles(img,bases):
+def GetTriangles(img,bases,edges):
   # image = cv2.imread(sys.argv[1],cv2.IMREAD_UNCHANGED)
   image = np.copy(img)
-  grayImg = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-  smooth = nr.rmSpecales(grayImg)
-  smooth = nr.rmSpecales(grayImg)
-  smooth = nr.smoothing(smooth)
+  # grayImg = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+  # smooth = nr.rmSpecales(grayImg)
+  # smooth = nr.rmSpecales(grayImg)
   # smooth = nr.smoothing(smooth)
-  cv2.imshow("smooth",smooth)
-  cv2.waitKey(0)
-  cv2.destroyAllWindows()
+  # edges = cv2.Canny(smooth,50,75)
+  # smooth = nr.smoothing(smooth)
+  # cv2.imshow("smooth",smooth)
+  # cv2.waitKey(0)
+  # cv2.destroyAllWindows()
   regions = (tr.getenclosedFigs(np.copy(image),1))
   # regions = [[(832, 557), (637, 350), (1057, 454), (979, 892), (547, 741)]]
   newregs,medians = pro.getRegionsTri(image,regions[0])
-  edges = cv2.Canny(smooth,50,75)
   # print("median",len(medians))
   # print(medians)
   sides = []
